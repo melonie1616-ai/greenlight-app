@@ -2325,7 +2325,7 @@ class FirestoreStore {
 }
 
 /* ═══ App State ═══ */
-let store, msgStore, allPosts = [], selectedCat = null, pendingPhoto = null, isFirebase = false;
+let store, msgStore, fireDb = null, allPosts = [], selectedCat = null, pendingPhoto = null, isFirebase = false;
 let feedFilter = 'all';
 let activeThreadUser = null;
 let user = {
@@ -2340,8 +2340,33 @@ function loadAvatar() {
 }
 function saveAvatar(av) {
     localStorage.setItem('greenlight_avatar', JSON.stringify(av));
+    if (fireDb && user.id) {
+        fireDb.collection('users').doc(user.id).set(
+            { avatar: av, userName: user.name, updatedAt: new Date().toISOString() },
+            { merge: true }
+        ).catch(err => console.error('Avatar sync error:', err));
+    }
 }
 let currentAvatar = loadAvatar();
+let _avatarUnsub = null;
+
+function syncAvatarFromFirestore() {
+    if (!fireDb || !user.id) return;
+    if (_avatarUnsub) _avatarUnsub();
+    _avatarUnsub = fireDb.collection('users').doc(user.id)
+        .onSnapshot(snap => {
+            if (!snap.exists) return;
+            const data = snap.data();
+            if (!data.avatar && !currentAvatar) return;
+            const remote = JSON.stringify(data.avatar || null);
+            const local = JSON.stringify(currentAvatar);
+            if (remote !== local) {
+                currentAvatar = data.avatar || null;
+                localStorage.setItem('greenlight_avatar', JSON.stringify(currentAvatar));
+                renderMyAvatar();
+            }
+        }, err => console.error('Avatar listener error:', err));
+}
 
 /* ── Message Data Stores ── */
 class LocalMsgStore {
@@ -2503,6 +2528,7 @@ function initStore() {
         try {
             firebase.initializeApp(FIREBASE_CONFIG);
             const fdb = firebase.firestore();
+            fireDb = fdb;
             store = new FirestoreStore(fdb);
             msgStore = new FirestoreMsgStore(fdb);
             isFirebase = true;
@@ -2640,6 +2666,7 @@ function startApp() {
     renderMyAvatar();
     showLoginCode();
     initProfileModal();
+    syncAvatarFromFirestore();
     store.onPostsChanged(onPosts);
 }
 
@@ -3382,7 +3409,7 @@ function initAvatarPicker() {
 
     $('avatarResetBtn').addEventListener('click', () => {
         currentAvatar = null;
-        localStorage.removeItem('greenlight_avatar');
+        saveAvatar(null);
         renderMyAvatar();
         renderProfileAvatar();
         $('avatarPicker').classList.add('hidden');
