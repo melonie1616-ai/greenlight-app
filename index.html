@@ -2353,30 +2353,22 @@ let currentAvatar = loadAvatar();
 let _avatarUnsub = null;
 
 function syncAvatarFromFirestore() {
-    if (!fireDb) { console.log('[AvatarSync] No fireDb'); return; }
-    if (!user.id) { console.log('[AvatarSync] No user.id'); return; }
-    console.log('[AvatarSync] Listening on users/' + user.id);
+    if (!fireDb || !user.id) return;
     if (_avatarUnsub) _avatarUnsub();
     _avatarUnsub = fireDb.collection('users').doc(user.id)
         .onSnapshot(snap => {
-            console.log('[AvatarSync] Snapshot exists=' + snap.exists);
             if (!snap.exists) {
                 if (currentAvatar) pushAvatarToFirestore(currentAvatar);
                 return;
             }
             const data = snap.data();
             const remote = data.avatar || null;
-            const local = currentAvatar;
-            const remoteType = remote ? remote.type : 'none';
-            const localType = local ? local.type : 'none';
-            console.log('[AvatarSync] remote=' + remoteType + ' local=' + localType + ' match=' + (JSON.stringify(remote) === JSON.stringify(local)));
-            if (JSON.stringify(remote) !== JSON.stringify(local)) {
+            if (JSON.stringify(remote) !== JSON.stringify(currentAvatar)) {
                 currentAvatar = remote;
                 localStorage.setItem('greenlight_avatar', JSON.stringify(currentAvatar));
                 renderMyAvatar();
-                console.log('[AvatarSync] Updated local avatar from Firestore');
             }
-        }, err => console.error('[AvatarSync] Listener error:', err));
+        }, err => console.error('Avatar listener error:', err));
 }
 
 /* ── Message Data Stores ── */
