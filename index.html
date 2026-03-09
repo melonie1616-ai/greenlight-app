@@ -2689,9 +2689,6 @@ function renderFeed(posts) {
 
 function makeCard(post, animate) {
     const cat = CATEGORIES.find(c => c.id === post.category);
-    const streak = calcStreak(allPosts, post.userId);
-    const badge = streakBadge(streak);
-    const badgeEmoji = badge ? badge.emoji : '🟢';
     const isOwn = post.userId === user.id;
 
     const div = document.createElement('div');
@@ -2715,7 +2712,6 @@ function makeCard(post, animate) {
             <div class="post-meta">
                 <div class="post-author">
                     <span class="post-author-link" data-uid="${post.userId}" data-uname="${esc(post.userName)}">${esc(post.userName)}</span>
-                    ${streak > 0 ? `<span class="user-streak">${badgeEmoji} ${streak}d</span>` : ''}
                 </div>
                 <span class="post-time">${timeAgo(post.timestamp)}${editedTag}</span>
             </div>
