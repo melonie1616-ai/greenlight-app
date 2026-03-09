@@ -2340,12 +2340,14 @@ function loadAvatar() {
 }
 function saveAvatar(av) {
     localStorage.setItem('greenlight_avatar', JSON.stringify(av));
-    if (fireDb && user.id) {
-        fireDb.collection('users').doc(user.id).set(
-            { avatar: av, userName: user.name, updatedAt: new Date().toISOString() },
-            { merge: true }
-        ).catch(err => console.error('Avatar sync error:', err));
-    }
+    pushAvatarToFirestore(av);
+}
+function pushAvatarToFirestore(av) {
+    if (!fireDb || !user.id) return;
+    fireDb.collection('users').doc(user.id).set(
+        { avatar: av || null, userName: user.name, updatedAt: new Date().toISOString() },
+        { merge: true }
+    ).catch(err => console.error('Avatar sync error:', err));
 }
 let currentAvatar = loadAvatar();
 let _avatarUnsub = null;
@@ -2355,13 +2357,15 @@ function syncAvatarFromFirestore() {
     if (_avatarUnsub) _avatarUnsub();
     _avatarUnsub = fireDb.collection('users').doc(user.id)
         .onSnapshot(snap => {
-            if (!snap.exists) return;
+            if (!snap.exists) {
+                if (currentAvatar) pushAvatarToFirestore(currentAvatar);
+                return;
+            }
             const data = snap.data();
-            if (!data.avatar && !currentAvatar) return;
-            const remote = JSON.stringify(data.avatar || null);
-            const local = JSON.stringify(currentAvatar);
-            if (remote !== local) {
-                currentAvatar = data.avatar || null;
+            const remote = data.avatar || null;
+            const local = currentAvatar;
+            if (JSON.stringify(remote) !== JSON.stringify(local)) {
+                currentAvatar = remote;
                 localStorage.setItem('greenlight_avatar', JSON.stringify(currentAvatar));
                 renderMyAvatar();
             }
