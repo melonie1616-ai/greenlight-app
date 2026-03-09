@@ -2143,22 +2143,15 @@ function encourage(n) {
 }
 
 function allStreaks(posts) {
-    const byId = {};
-    for (const p of posts) {
-        if (!byId[p.userId]) byId[p.userId] = { userName: p.userName, userId: p.userId };
-    }
-    const streaks = Object.values(byId)
-        .map(u => ({ ...u, streak: calcStreak(posts, u.userId) }))
-        .filter(u => u.streak > 0);
-
     const byName = {};
-    for (const s of streaks) {
-        const key = s.userName.toLowerCase().trim();
-        if (!byName[key] || s.streak > byName[key].streak) {
-            byName[key] = s;
-        }
+    for (const p of posts) {
+        const key = p.userName.toLowerCase().trim();
+        if (!byName[key]) byName[key] = { userName: p.userName, userIds: new Set() };
+        byName[key].userIds.add(p.userId);
     }
     return Object.values(byName)
+        .map(u => ({ userName: u.userName, streak: calcStreak(posts, u.userIds) }))
+        .filter(u => u.streak > 0)
         .sort((a, b) => b.streak - a.streak)
         .slice(0, 8);
 }
