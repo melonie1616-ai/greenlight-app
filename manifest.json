@@ -2,7 +2,7 @@
   "name": "Green Light",
   "short_name": "Green Light",
   "description": "Give yourself the green light — do one good thing for yourself, every day.",
-  "start_url": "./greenlight-app.html",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#16a34a",
   "theme_color": "#15803d",
