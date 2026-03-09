@@ -596,27 +596,33 @@
             flex-wrap: wrap;
             flex: 1;
         }
-        .cat-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-            padding: 4px 10px;
-            border-radius: 6px;
+        .cat-select {
+            padding: 7px 12px;
+            border-radius: var(--radius-sm);
             border: 1px solid var(--gray-200);
             background: var(--white);
-            font-size: 0.82rem;
+            font-family: inherit;
+            font-size: 0.88rem;
             font-weight: 500;
+            color: var(--gray-500);
             cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M3 5l3 3 3-3'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 28px;
+            transition: border-color 0.15s;
+        }
+        .cat-select:focus { outline: none; border-color: var(--green-400); box-shadow: 0 0 0 3px rgba(34,197,94,0.12); }
+        .cat-select option { font-size: 0.9rem; }
+        .cat-pill-legacy {
+            display: none;
             transition: all 0.12s;
             color: var(--gray-500);
             user-select: none;
         }
-        .cat-pill:hover { background: var(--gray-50); border-color: var(--gray-300); color: var(--gray-700); }
-        .cat-pill.active {
-            border-color: var(--green-500);
-            background: var(--green-50);
-            color: var(--green-600);
-        }
+        .cat-select.has-value { color: var(--gray-700); border-color: var(--green-400); }
 
         .post-actions {
             margin-top: 12px;
@@ -1830,7 +1836,9 @@
                     <div class="post-toolbar">
                         <button class="btn-photo" id="btnPhoto">📷 Photo</button>
                         <input type="file" class="photo-input" id="photoInput" accept="image/*">
-                        <div class="categories" id="categoryPicker"></div>
+                        <select class="cat-select" id="categoryPicker">
+                            <option value="">Category (optional)</option>
+                        </select>
                     </div>
                     <div class="post-actions">
                         <button class="btn-post" id="btnPost" disabled>Post</button>
@@ -2600,18 +2608,12 @@ function setAvatar(el, name) {
 
 
 function renderCats() {
-    $('categoryPicker').innerHTML = CATEGORIES.map(c =>
-        `<button class="cat-pill" data-cat="${c.id}">${c.emoji} ${c.label}</button>`
-    ).join('');
-    $('categoryPicker').addEventListener('click', e => {
-        const pill = e.target.closest('.cat-pill');
-        if (!pill) return;
-        const id = pill.dataset.cat;
-        if (selectedCat === id) { selectedCat = null; pill.classList.remove('active'); }
-        else {
-            $('categoryPicker').querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
-            selectedCat = id; pill.classList.add('active');
-        }
+    const sel = $('categoryPicker');
+    sel.innerHTML = '<option value="">Category (optional)</option>' +
+        CATEGORIES.map(c => `<option value="${c.id}">${c.emoji} ${c.label}</option>`).join('');
+    sel.addEventListener('change', () => {
+        selectedCat = sel.value || null;
+        sel.classList.toggle('has-value', !!sel.value);
     });
 }
 
@@ -2840,7 +2842,9 @@ function submitPost() {
     $('postInput').style.height = 'auto';
     $('btnPost').disabled = true;
     selectedCat = null;
-    $('categoryPicker').querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+    $('categoryPicker').value = '';
+    $('categoryPicker').classList.remove('has-value');
+    selectedCat = null;
     removePhoto();
 
     const oldStreak = calcStreak(allPosts, user.id);
