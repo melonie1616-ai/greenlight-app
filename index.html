@@ -2127,16 +2127,22 @@ function encourage(n) {
 }
 
 function allStreaks(posts) {
-    const map = {};
+    const byId = {};
     for (const p of posts) {
-        const key = p.userId.toLowerCase().trim();
-        if (!map[key] || new Date(p.timestamp) > new Date(map[key].timestamp)) {
-            map[key] = { userName: p.userName, userId: p.userId, timestamp: p.timestamp };
+        if (!byId[p.userId]) byId[p.userId] = { userName: p.userName, userId: p.userId };
+    }
+    const streaks = Object.values(byId)
+        .map(u => ({ ...u, streak: calcStreak(posts, u.userId) }))
+        .filter(u => u.streak > 0);
+
+    const byName = {};
+    for (const s of streaks) {
+        const key = s.userName.toLowerCase().trim();
+        if (!byName[key] || s.streak > byName[key].streak) {
+            byName[key] = s;
         }
     }
-    return Object.values(map)
-        .map(u => ({ userName: u.userName, userId: u.userId, streak: calcStreak(posts, u.userId) }))
-        .filter(u => u.streak > 0)
+    return Object.values(byName)
         .sort((a, b) => b.streak - a.streak)
         .slice(0, 8);
 }
