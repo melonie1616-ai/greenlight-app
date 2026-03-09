@@ -467,7 +467,7 @@
         }
         @media (max-width: 768px) {
             .container { grid-template-columns: 1fr; padding: 12px; gap: 14px; }
-            .sidebar-right { order: -1; }
+            .sidebar-right { order: 1; }
             .dashboard-strip { padding: 0 12px; }
             .dash-grid { grid-template-columns: repeat(2, 1fr); }
         }
@@ -1762,7 +1762,7 @@
 </div>
 
 <!-- Mode Banner -->
-<div id="modeBanner" class="mode-banner">
+<div id="modeBanner" class="mode-banner hidden">
     <span id="bannerText"></span>
 </div>
 
@@ -2129,10 +2129,13 @@ function encourage(n) {
 function allStreaks(posts) {
     const map = {};
     for (const p of posts) {
-        if (!map[p.userId]) map[p.userId] = { userName: p.userName, userId: p.userId };
+        const key = p.userId.toLowerCase().trim();
+        if (!map[key] || new Date(p.timestamp) > new Date(map[key].timestamp)) {
+            map[key] = { userName: p.userName, userId: p.userId, timestamp: p.timestamp };
+        }
     }
     return Object.values(map)
-        .map(u => ({ ...u, streak: calcStreak(posts, u.userId) }))
+        .map(u => ({ userName: u.userName, userId: u.userId, streak: calcStreak(posts, u.userId) }))
         .filter(u => u.streak > 0)
         .sort((a, b) => b.streak - a.streak)
         .slice(0, 8);
