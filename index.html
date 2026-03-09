@@ -1594,25 +1594,7 @@
         /* ── Avatar Picker ── */
         .post-avatar-wrap {
             position: relative;
-            cursor: pointer;
         }
-        .post-avatar-wrap::after {
-            content: '✎';
-            position: absolute;
-            bottom: -2px; right: -2px;
-            width: 18px; height: 18px;
-            background: var(--green-600);
-            color: white;
-            border-radius: 50%;
-            font-size: 0.55rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.15s;
-            border: 2px solid var(--white);
-        }
-        .post-avatar-wrap:hover::after { opacity: 1; }
 
         .post-avatar.has-emoji {
             font-size: 1.5rem;
@@ -1629,20 +1611,7 @@
         }
 
         .avatar-picker-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 900;
-        }
-        .avatar-picker {
-            position: fixed;
-            z-index: 901;
-            background: var(--white);
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-md);
-            padding: 16px;
-            width: 340px;
-            animation: scaleIn 0.15s ease-out;
+            display: none;
         }
         .avatar-picker-title {
             font-size: 0.72rem;
@@ -1736,6 +1705,25 @@
         .profile-save:hover { background: #15803d; }
         .profile-cancel { background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-200); }
         .profile-cancel:hover { background: var(--gray-200); }
+        .profile-avatar-section {
+            display: flex; flex-direction: column; align-items: center; margin-bottom: 18px;
+        }
+        .profile-avatar-preview {
+            width: 64px; height: 64px; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem; font-weight: 700; color: white; overflow: hidden;
+        }
+        .profile-avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-avatar-change {
+            background: none; border: none; font-family: inherit; font-size: 0.82rem;
+            color: var(--green-600); cursor: pointer; margin-top: 6px; font-weight: 600;
+            transition: color 0.12s;
+        }
+        .profile-avatar-change:hover { color: #15803d; }
+        .avatar-picker-inline {
+            background: var(--gray-50); border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm); padding: 14px; margin-bottom: 16px;
+        }
 
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -1848,14 +1836,6 @@
             <div class="post-input-wrap">
                 <div class="post-avatar-wrap" id="avatarWrap">
                     <div class="post-avatar" id="myAvatar"></div>
-                    <div class="avatar-picker hidden" id="avatarPicker">
-                        <div class="avatar-picker-title">Choose an avatar</div>
-                        <div class="avatar-emoji-grid" id="emojiGrid"></div>
-                        <div class="avatar-divider"></div>
-                        <button class="avatar-upload-btn" id="avatarUploadBtn">📷 Upload a photo</button>
-                        <input type="file" class="photo-input" id="avatarFileInput" accept="image/*">
-                        <button class="avatar-reset-btn" id="avatarResetBtn">Reset to initials</button>
-                    </div>
                 </div>
                 <div class="post-input-right">
                     <textarea class="post-input" id="postInput" placeholder="What did you do for yourself today?" rows="1"></textarea>
@@ -1964,6 +1944,18 @@
 <div id="profileModal" class="modal-overlay hidden">
     <div class="modal profile-modal">
         <h2>Edit Profile</h2>
+        <div class="profile-avatar-section" id="profileAvatarSection">
+            <div class="profile-avatar-preview" id="profileAvatarPreview"></div>
+            <button class="profile-avatar-change" id="profileAvatarChange">Change avatar</button>
+        </div>
+        <div class="avatar-picker-inline hidden" id="avatarPicker">
+            <div class="avatar-picker-title">Choose an avatar</div>
+            <div class="avatar-emoji-grid" id="emojiGrid"></div>
+            <div class="avatar-divider"></div>
+            <button class="avatar-upload-btn" id="avatarUploadBtn">📷 Upload a photo</button>
+            <input type="file" class="photo-input" id="avatarFileInput" accept="image/*">
+            <button class="avatar-reset-btn" id="avatarResetBtn">Reset to initials</button>
+        </div>
         <div class="profile-field">
             <label for="profileName">Name</label>
             <input type="text" id="profileName" maxlength="30" autocomplete="off">
@@ -2613,18 +2605,23 @@ function showLoginCode() {
     });
 }
 
+function closeProfileModal() {
+    $('profileModal').classList.add('hidden');
+    $('avatarPicker').classList.add('hidden');
+}
+
 function initProfileModal() {
     $('headerProfile').addEventListener('click', () => {
         $('profileName').value = user.name;
         $('profileEmail').value = user.email || '';
+        renderProfileAvatar();
+        $('avatarPicker').classList.add('hidden');
         $('profileModal').classList.remove('hidden');
         $('profileName').focus();
     });
-    $('profileCancel').addEventListener('click', () => {
-        $('profileModal').classList.add('hidden');
-    });
+    $('profileCancel').addEventListener('click', closeProfileModal);
     $('profileModal').addEventListener('click', e => {
-        if (e.target === $('profileModal')) $('profileModal').classList.add('hidden');
+        if (e.target === $('profileModal')) closeProfileModal();
     });
     $('profileSave').addEventListener('click', () => {
         const name = $('profileName').value.trim();
@@ -2634,7 +2631,7 @@ function initProfileModal() {
         localStorage.setItem('greenlight_userName', user.name);
         localStorage.setItem('greenlight_userEmail', user.email);
         renderMyAvatar();
-        $('profileModal').classList.add('hidden');
+        closeProfileModal();
         showToast('Profile updated');
     });
 }
@@ -3339,18 +3336,24 @@ function sendBrowserNotif(title, body) {
     try { new Notification(title, { body }); } catch {}
 }
 
-/* ── Avatar Picker ── */
+/* ── Avatar Picker (inside profile modal) ── */
 function initAvatarPicker() {
     const grid = $('emojiGrid');
     grid.innerHTML = AVATAR_EMOJIS.map(e =>
         `<button class="avatar-emoji-btn" data-emoji="${e}">${e}</button>`
     ).join('');
 
-    $('avatarWrap').addEventListener('click', e => {
-        if (e.target.closest('.avatar-picker')) return;
-        toggleAvatarPicker();
+    $('profileAvatarChange').addEventListener('click', () => {
+        const picker = $('avatarPicker');
+        const showing = !picker.classList.contains('hidden');
+        picker.classList.toggle('hidden');
+        if (!showing) {
+            picker.querySelectorAll('.avatar-emoji-btn').forEach(btn => {
+                btn.classList.toggle('selected',
+                    currentAvatar?.type === 'emoji' && currentAvatar.value === btn.dataset.emoji);
+            });
+        }
     });
-
 
     grid.addEventListener('click', e => {
         const btn = e.target.closest('.avatar-emoji-btn');
@@ -3358,7 +3361,8 @@ function initAvatarPicker() {
         currentAvatar = { type: 'emoji', value: btn.dataset.emoji };
         saveAvatar(currentAvatar);
         renderMyAvatar();
-        closeAvatarPicker();
+        renderProfileAvatar();
+        $('avatarPicker').classList.add('hidden');
     });
 
     $('avatarUploadBtn').addEventListener('click', () => $('avatarFileInput').click());
@@ -3370,7 +3374,8 @@ function initAvatarPicker() {
             currentAvatar = { type: 'photo', value: data };
             saveAvatar(currentAvatar);
             renderMyAvatar();
-            closeAvatarPicker();
+            renderProfileAvatar();
+            $('avatarPicker').classList.add('hidden');
         } catch (err) { console.error('Avatar upload error:', err); }
         $('avatarFileInput').value = '';
     });
@@ -3379,38 +3384,15 @@ function initAvatarPicker() {
         currentAvatar = null;
         localStorage.removeItem('greenlight_avatar');
         renderMyAvatar();
-        closeAvatarPicker();
-    });
-
-    document.addEventListener('click', e => {
-        if (!$('avatarPicker').classList.contains('hidden') &&
-            !e.target.closest('#avatarWrap')) {
-            closeAvatarPicker();
-        }
+        renderProfileAvatar();
+        $('avatarPicker').classList.add('hidden');
     });
 }
 
-function toggleAvatarPicker() {
-    const picker = $('avatarPicker');
-    picker.classList.toggle('hidden');
-    if (!picker.classList.contains('hidden')) {
-        picker.querySelectorAll('.avatar-emoji-btn').forEach(btn => {
-            btn.classList.toggle('selected',
-                currentAvatar?.type === 'emoji' && currentAvatar.value === btn.dataset.emoji);
-        });
-        const rect = $('avatarWrap').getBoundingClientRect();
-        let left = rect.left;
-        let top = rect.bottom + 8;
-        if (left + 340 > window.innerWidth - 16) left = window.innerWidth - 340 - 16;
-        if (left < 16) left = 16;
-        if (top + 400 > window.innerHeight) top = rect.top - 400 - 8;
-        picker.style.left = left + 'px';
-        picker.style.top = top + 'px';
-    }
-}
-
-function closeAvatarPicker() {
-    $('avatarPicker').classList.add('hidden');
+function renderProfileAvatar() {
+    const el = $('profileAvatarPreview');
+    if (!el || !user.name) return;
+    applyAvatar(el, user.name, currentAvatar);
 }
 
 function renderMyAvatar() {
