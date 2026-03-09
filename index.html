@@ -2150,7 +2150,18 @@ function encourage(n) {
     return '';
 }
 
-function allStreaks(posts) {
+function activeDays30(posts, userIds) {
+    const ids = typeof userIds === 'object' ? userIds : new Set([userIds]);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    const days = new Set(
+        posts.filter(p => ids.has(p.userId) && new Date(p.timestamp) >= cutoff)
+             .map(p => toDayStr(p.timestamp))
+    );
+    return days.size;
+}
+
+function allActivity(posts) {
     const byName = {};
     for (const p of posts) {
         const key = p.userName.toLowerCase().trim();
@@ -2158,9 +2169,9 @@ function allStreaks(posts) {
         byName[key].userIds.add(p.userId);
     }
     return Object.values(byName)
-        .map(u => ({ userName: u.userName, streak: calcStreak(posts, u.userIds) }))
-        .filter(u => u.streak > 0)
-        .sort((a, b) => b.streak - a.streak)
+        .map(u => ({ userName: u.userName, days: activeDays30(posts, u.userIds) }))
+        .filter(u => u.days > 0)
+        .sort((a, b) => b.days - a.days)
         .slice(0, 8);
 }
 
@@ -2800,7 +2811,7 @@ function initFeedTabs() {
 }
 
 function renderTopStreaks(posts) {
-    const s = allStreaks(posts);
+    const s = allActivity(posts);
 
     if (!s.length) {
         $('headerLeaderboard').innerHTML = '';
@@ -2808,14 +2819,13 @@ function renderTopStreaks(posts) {
     }
     const top5 = s.slice(0, 5);
     $('headerLeaderboard').innerHTML = `
-        <div class="hl-title">Leaderboard</div>
+        <div class="hl-title">Leaderboard <span style="font-weight:400;opacity:0.7;font-size:0.7rem">(30d)</span></div>
         ${top5.map((x, i) => {
-            const b = streakBadge(x.streak);
-            const emoji = b ? b.emoji : '🟢';
+            const emoji = x.days >= 20 ? '🔥' : x.days >= 10 ? '⭐' : x.days >= 5 ? '💚' : '🟢';
             return `<div class="hl-row">
                 <span class="hl-rank">${i + 1}</span>
                 <span class="hl-name">${esc(x.userName)}</span>
-                <span class="hl-streak">${emoji} ${x.streak}d</span>
+                <span class="hl-streak">${emoji} ${x.days}d</span>
             </div>`;
         }).join('')}
     `;
@@ -3010,7 +3020,7 @@ function renderDashboard(posts) {
     }
     $('headerTrend').innerHTML = trendHtml;
     $('headerTrendLabel').textContent = daysActive > 0
-        ? `🟢 ${daysActive}-day streak this week${badge ? ' · ' + badge.emoji + ' ' + badge.label : ''}`
+        ? `🟢 ${daysActive} day${daysActive > 1 ? 's' : ''} this week${badge ? ' · ' + badge.emoji + ' ' + badge.label : ''}`
         : 'Your Week';
 }
 
