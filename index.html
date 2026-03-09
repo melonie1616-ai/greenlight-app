@@ -2061,6 +2061,21 @@ function todayStr() {
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
+function myPostIds(posts) {
+    const ids = new Set();
+    ids.add(user.id);
+    for (const p of posts) {
+        if (p.userName && p.userName.toLowerCase().trim() === user.name.toLowerCase().trim()) {
+            ids.add(p.userId);
+        }
+    }
+    return ids;
+}
+
+function isMyPost(post, ids) {
+    return ids.has(post.userId);
+}
+
 function toDayStr(date) {
     const d = new Date(date);
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -2092,8 +2107,9 @@ function timeAgo(date) {
 }
 
 function calcStreak(posts, userId) {
+    const ids = typeof userId === 'object' ? userId : new Set([userId]);
     const days = [...new Set(
-        posts.filter(p => p.userId === userId).map(p => toDayStr(p.timestamp))
+        posts.filter(p => ids.has(p.userId)).map(p => toDayStr(p.timestamp))
     )].sort().reverse();
     if (!days.length) return 0;
 
@@ -2577,7 +2593,7 @@ function openLightbox(src) {
 
 function onPosts(posts) {
     allPosts = posts;
-    const s = calcStreak(posts, user.id);
+    const s = calcStreak(posts, myPostIds(posts));
     renderBadges(s);
     renderFeed(posts);
     renderTopStreaks(posts);
@@ -2618,7 +2634,10 @@ function renderBadges(streak) {
 }
 
 function applyFilter(posts) {
-    if (feedFilter === 'mine') return posts.filter(p => p.userId === user.id);
+    if (feedFilter === 'mine') {
+        const ids = myPostIds(posts);
+        return posts.filter(p => isMyPost(p, ids));
+    }
     if (feedFilter === 'photos') return posts.filter(p => !!p.photo);
     return posts;
 }
@@ -2959,7 +2978,8 @@ function renderDashboard(posts) {
     startOfWeek.setDate(now.getDate() - now.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
 
-    const myPosts = posts.filter(p => p.userId === user.id);
+    const ids = myPostIds(posts);
+    const myPosts = posts.filter(p => isMyPost(p, ids));
     const weekPosts = myPosts.filter(p => new Date(p.timestamp) >= startOfWeek);
     const daysActive = new Set(weekPosts.map(p => new Date(p.timestamp).toDateString())).size;
 
@@ -2969,11 +2989,11 @@ function renderDashboard(posts) {
         const rx = p.reactions || {};
         for (const arr of Object.values(rx)) {
             if (arr.includes(user.name)) reactionsGiven++;
-            if (p.userId === user.id) reactionsReceived += arr.length;
+            if (isMyPost(p, ids)) reactionsReceived += arr.length;
         }
     }
 
-    const streak = calcStreak(posts, user.id);
+    const streak = calcStreak(posts, ids);
     const badge = streakBadge(streak);
 
     const dayLabels = ['S','M','T','W','T','F','S'];
