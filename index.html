@@ -313,7 +313,7 @@
         .hl-streak {
             font-size: 0.7rem;
             font-weight: 600;
-            color: rgba(255,255,255,0.6);
+            color: rgba(255,255,255,0.8);
             flex-shrink: 0;
         }
         @media (max-width: 768px) {
@@ -365,7 +365,7 @@
         .header-trend-label {
             font-size: 0.75rem;
             font-weight: 600;
-            color: rgba(255,255,255,0.7);
+            color: rgba(255,255,255,0.85);
             text-transform: uppercase;
             letter-spacing: 0.08em;
             margin-top: 18px;
@@ -408,7 +408,7 @@
         .ht-dot.future { opacity: 0.35; }
         .ht-label {
             font-size: 0.65rem;
-            color: rgba(255,255,255,0.6);
+            color: rgba(255,255,255,0.78);
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.03em;
@@ -783,7 +783,7 @@
         }
         .post-time {
             font-size: 0.78rem;
-            color: var(--gray-400);
+            color: var(--gray-500);
         }
         .post-body {
             font-size: 0.95rem;
@@ -1330,7 +1330,7 @@
         }
         .tip-source {
             font-size: 0.75rem;
-            color: var(--gray-400);
+            color: var(--gray-500);
             margin-top: 8px;
             font-style: normal;
         }
@@ -1707,6 +1707,35 @@
         .avatar-reset-btn:hover { color: var(--gray-600); }
 
         .hidden { display: none !important; }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+        .skip-link { position: absolute; top: -100px; left: 16px; background: var(--green-600); color: white; padding: 8px 16px; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.9rem; z-index: 9999; transition: top 0.2s; }
+        .skip-link:focus { top: 8px; }
+        .mobile-leaderboard { display: none; }
+        .mobile-leaderboard:empty { display: none !important; }
+        .mobile-leaderboard .hl-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; color: var(--gray-500); margin-bottom: 10px; }
+        .mobile-leaderboard .hl-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--gray-100); }
+        .mobile-leaderboard .hl-row:last-child { border-bottom: none; }
+        .mobile-leaderboard .hl-rank { width: 22px; height: 22px; border-radius: 6px; background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; color: var(--gray-400); flex-shrink: 0; }
+        .mobile-leaderboard .hl-row:first-child .hl-rank { background: var(--green-50); color: var(--green-600); }
+        .mobile-leaderboard .hl-name { flex: 1; font-size: 0.88rem; font-weight: 500; color: var(--gray-700); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .mobile-leaderboard .hl-streak { font-size: 0.82rem; font-weight: 600; color: var(--green-600); flex-shrink: 0; }
+        @media (max-width: 768px) { .mobile-leaderboard { display: block; } }
+        .profile-modal { max-width: 380px; }
+        .profile-modal h2 { font-size: 1.2rem; margin-bottom: 16px; }
+        .profile-field { margin-bottom: 14px; }
+        .profile-field label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--gray-500); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .profile-field input {
+            width: 100%; padding: 10px 14px; border: 1px solid var(--gray-300);
+            border-radius: var(--radius-sm); font-family: inherit; font-size: 0.95rem;
+            background: var(--white); color: var(--gray-900); transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .profile-field input:focus { outline: none; border-color: var(--green-400); box-shadow: 0 0 0 3px rgba(34,197,94,0.12); }
+        .profile-actions { display: flex; gap: 8px; margin-top: 18px; }
+        .profile-actions button { flex: 1; padding: 10px; border-radius: var(--radius-sm); font-family: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+        .profile-save { background: var(--green-600); color: white; border: none; }
+        .profile-save:hover { background: #15803d; }
+        .profile-cancel { background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-200); }
+        .profile-cancel:hover { background: var(--gray-200); }
 
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -1714,6 +1743,7 @@
     </style>
 </head>
 <body>
+<a href="#feed" class="skip-link">Skip to feed</a>
 
 <!-- Welcome Modal -->
 <div id="welcomeModal" class="modal-overlay hidden">
@@ -1784,15 +1814,15 @@
         <span></span><span></span><span></span><span></span><span></span>
         <span></span><span></span><span></span><span></span><span></span>
     </div>
-    <div class="header-top-left" id="headerProfile">
+    <div class="header-top-left" id="headerProfile" style="cursor:pointer" title="Edit profile" role="button" aria-label="Edit profile">
         <div class="header-avatar" id="headerAvatar"></div>
         <div class="header-user-name" id="headerUserName"></div>
     </div>
     <div class="header-top-right">
         <div class="header-icons">
-            <button class="msg-btn" id="msgBtn" title="Messages">💬<span class="msg-badge hidden" id="msgBadge">0</span></button>
-            <button class="notif-btn" id="notifBtn" title="Toggle notifications">🔔</button>
-            <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+            <button class="msg-btn" id="msgBtn" title="Messages" aria-label="Messages">💬<span class="msg-badge hidden" id="msgBadge" aria-live="polite">0</span></button>
+            <button class="notif-btn" id="notifBtn" title="Toggle notifications" aria-label="Toggle notifications">🔔</button>
+            <button class="theme-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
         </div>
         <div class="header-leaderboard" id="headerLeaderboard"></div>
     </div>
@@ -1836,7 +1866,8 @@
                     <div class="post-toolbar">
                         <button class="btn-photo" id="btnPhoto">📷 Photo</button>
                         <input type="file" class="photo-input" id="photoInput" accept="image/*">
-                        <select class="cat-select" id="categoryPicker">
+                        <label for="categoryPicker" class="sr-only">Category</label>
+                        <select class="cat-select" id="categoryPicker" aria-label="Post category">
                             <option value="">Category (optional)</option>
                         </select>
                     </div>
@@ -1847,10 +1878,10 @@
             </div>
         </div>
 
-        <div class="feed-tabs" id="feedTabs">
-            <button class="feed-tab active" data-filter="all">All</button>
-            <button class="feed-tab" data-filter="mine">Mine</button>
-            <button class="feed-tab" data-filter="photos">Photos</button>
+        <div class="feed-tabs" id="feedTabs" role="tablist">
+            <button class="feed-tab active" data-filter="all" role="tab" aria-selected="true">All</button>
+            <button class="feed-tab" data-filter="mine" role="tab" aria-selected="false">Mine</button>
+            <button class="feed-tab" data-filter="photos" role="tab" aria-selected="false">Photos</button>
         </div>
         <div class="feed" id="feed">
             <div class="feed-empty" id="feedEmpty">
@@ -1864,7 +1895,7 @@
 
     <aside class="sidebar-right">
         <div class="card how-it-works">
-            <div class="card-title collapsible" id="hiwToggle">How It Works <span class="collapse-toggle"><span class="collapse-label"></span> <span class="collapse-arrow">▾</span></span></div>
+            <div class="card-title collapsible" id="hiwToggle" aria-expanded="true" aria-controls="hiwBody">How It Works <span class="collapse-toggle"><span class="collapse-label"></span> <span class="collapse-arrow">▾</span></span></div>
             <ul class="collapsible-body" id="hiwBody">
                 <li>Do one thing good for YOU each day</li>
                 <li>Post when you want — text, photo, emoji</li>
@@ -1874,7 +1905,7 @@
             </ul>
         </div>
         <div class="card tip-card" id="tipCard">
-            <div class="card-title collapsible collapsed" id="tipToggle">Tip of the Day <span class="collapse-toggle"><span class="collapse-label"></span> <span class="collapse-arrow">▾</span></span></div>
+            <div class="card-title collapsible collapsed" id="tipToggle" aria-expanded="false" aria-controls="tipBody">Tip of the Day <span class="collapse-toggle"><span class="collapse-label"></span> <span class="collapse-arrow">▾</span></span></div>
             <div class="collapsible-body collapsed" id="tipBody">
                 <span class="tip-icon" id="tipIcon"></span>
                 <div class="tip-text" id="tipText"></div>
@@ -1883,11 +1914,12 @@
             </div>
         </div>
         <div class="card">
-            <div class="card-title collapsible collapsed" id="badgeToggle">Badges <span class="collapse-toggle"><span class="collapse-label"></span> <span class="collapse-arrow">▾</span></span></div>
+            <div class="card-title collapsible collapsed" id="badgeToggle" aria-expanded="false" aria-controls="badgeBody">Badges <span class="collapse-toggle"><span class="collapse-label"></span> <span class="collapse-arrow">▾</span></span></div>
             <div class="collapsible-body collapsed" id="badgeBody">
                 <div class="badge-grid" id="badgeGrid"></div>
             </div>
         </div>
+        <div class="card mobile-leaderboard" id="mobileLeaderboard"></div>
         <div class="card" id="loginCodeCard" style="display:none;">
             <div class="card-title">Your Login Code</div>
             <p style="font-size:0.82rem;color:var(--gray-500);margin-bottom:8px;line-height:1.45;">Save this code to restore your account on another browser or device.</p>
@@ -1928,6 +1960,25 @@
     </div>
 </div>
 
+<!-- Profile Modal -->
+<div id="profileModal" class="modal-overlay hidden">
+    <div class="modal profile-modal">
+        <h2>Edit Profile</h2>
+        <div class="profile-field">
+            <label for="profileName">Name</label>
+            <input type="text" id="profileName" maxlength="30" autocomplete="off">
+        </div>
+        <div class="profile-field">
+            <label for="profileEmail">Email <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--gray-400)">(optional)</span></label>
+            <input type="email" id="profileEmail" maxlength="100" autocomplete="email">
+        </div>
+        <div class="profile-actions">
+            <button class="profile-cancel" id="profileCancel">Cancel</button>
+            <button class="profile-save" id="profileSave">Save</button>
+        </div>
+    </div>
+</div>
+
 <!-- Confetti Canvas -->
 <canvas id="confettiCanvas"></canvas>
 
@@ -1938,7 +1989,7 @@
 </div>
 
 <!-- Toast -->
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -2049,15 +2100,10 @@ function genId() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
-function avatarColor(name) {
-    let h = 0;
-    for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-    return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
-}
-
 function getInitials(name) {
     return name.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
 }
+
 function avatarColor(name) {
     let h = 0;
     for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
@@ -2567,9 +2613,36 @@ function showLoginCode() {
     });
 }
 
+function initProfileModal() {
+    $('headerProfile').addEventListener('click', () => {
+        $('profileName').value = user.name;
+        $('profileEmail').value = user.email || '';
+        $('profileModal').classList.remove('hidden');
+        $('profileName').focus();
+    });
+    $('profileCancel').addEventListener('click', () => {
+        $('profileModal').classList.add('hidden');
+    });
+    $('profileModal').addEventListener('click', e => {
+        if (e.target === $('profileModal')) $('profileModal').classList.add('hidden');
+    });
+    $('profileSave').addEventListener('click', () => {
+        const name = $('profileName').value.trim();
+        if (!name) { $('profileName').focus(); return; }
+        user.name = name;
+        user.email = ($('profileEmail').value || '').trim();
+        localStorage.setItem('greenlight_userName', user.name);
+        localStorage.setItem('greenlight_userEmail', user.email);
+        renderMyAvatar();
+        $('profileModal').classList.add('hidden');
+        showToast('Profile updated');
+    });
+}
+
 function startApp() {
     renderMyAvatar();
     showLoginCode();
+    initProfileModal();
     store.onPostsChanged(onPosts);
 }
 
@@ -2763,10 +2836,14 @@ function wirePostMenu(div, post) {
     });
     menu.querySelector('[data-action="delete"]')?.addEventListener('click', () => {
         menu.classList.remove('open');
-        if (confirm('Delete this post?')) {
+        const card = div;
+        card.style.opacity = '0.4';
+        card.style.transition = 'opacity 0.2s';
+        showUndoToast('Post deleted', () => {
             store.deletePost(post.id);
-            showToast('Post deleted');
-        }
+        }, () => {
+            card.style.opacity = '1';
+        });
     });
 }
 
@@ -2799,8 +2876,12 @@ function initFeedTabs() {
     $('feedTabs').addEventListener('click', e => {
         const tab = e.target.closest('.feed-tab');
         if (!tab) return;
-        $('feedTabs').querySelectorAll('.feed-tab').forEach(t => t.classList.remove('active'));
+        $('feedTabs').querySelectorAll('.feed-tab').forEach(t => {
+            t.classList.remove('active');
+            t.setAttribute('aria-selected', 'false');
+        });
         tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
         feedFilter = tab.dataset.filter;
         renderFeed(allPosts);
     });
@@ -2811,19 +2892,25 @@ function renderTopStreaks(posts) {
 
     if (!s.length) {
         $('headerLeaderboard').innerHTML = '';
+        $('mobileLeaderboard').innerHTML = '';
         return;
     }
     const top5 = s.slice(0, 5);
+    const rows = top5.map((x, i) => {
+        const emoji = x.days >= 20 ? '🔥' : x.days >= 10 ? '⭐' : x.days >= 5 ? '💚' : '🟢';
+        return `<div class="hl-row">
+            <span class="hl-rank">${i + 1}</span>
+            <span class="hl-name">${esc(x.userName)}</span>
+            <span class="hl-streak">${emoji} ${x.days}d</span>
+        </div>`;
+    }).join('');
     $('headerLeaderboard').innerHTML = `
         <div class="hl-title">Leaderboard <span style="font-weight:400;opacity:0.7;font-size:0.7rem">(30d)</span></div>
-        ${top5.map((x, i) => {
-            const emoji = x.days >= 20 ? '🔥' : x.days >= 10 ? '⭐' : x.days >= 5 ? '💚' : '🟢';
-            return `<div class="hl-row">
-                <span class="hl-rank">${i + 1}</span>
-                <span class="hl-name">${esc(x.userName)}</span>
-                <span class="hl-streak">${emoji} ${x.days}d</span>
-            </div>`;
-        }).join('')}
+        ${rows}
+    `;
+    $('mobileLeaderboard').innerHTML = `
+        <div class="hl-title">Leaderboard <span style="font-weight:400;opacity:0.7;font-size:0.7rem">(30d)</span></div>
+        ${rows}
     `;
 }
 
@@ -2874,10 +2961,28 @@ function autoResize(el) { el.style.height = 'auto'; el.style.height = el.scrollH
 let _toastTimer;
 function showToast(msg) {
     if (!msg) return;
-    $('toast').textContent = msg;
+    $('toast').innerHTML = esc(msg);
     $('toast').classList.add('show');
     clearTimeout(_toastTimer);
     _toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2800);
+}
+
+let _undoTimer;
+function showUndoToast(msg, onConfirm, onUndo) {
+    clearTimeout(_toastTimer);
+    clearTimeout(_undoTimer);
+    $('toast').innerHTML = `${esc(msg)} <button id="undoBtn" style="margin-left:12px;background:none;border:1px solid rgba(255,255,255,0.4);color:inherit;padding:3px 12px;border-radius:6px;font-family:inherit;font-size:0.82rem;font-weight:600;cursor:pointer;">Undo</button>`;
+    $('toast').classList.add('show');
+    $('undoBtn').addEventListener('click', () => {
+        clearTimeout(_undoTimer);
+        $('toast').classList.remove('show');
+        if (onUndo) onUndo();
+        showToast('Restored');
+    });
+    _undoTimer = setTimeout(() => {
+        $('toast').classList.remove('show');
+        if (onConfirm) onConfirm();
+    }, 4000);
 }
 
 /* ── Confetti ── */
@@ -3220,9 +3325,11 @@ function initNotifications() {
     });
 }
 function updateNotifBtn(on) {
+    const label = on ? 'Notifications on — click to disable' : 'Notifications off — click to enable';
     $('notifBtn').textContent = on ? '🔔' : '🔕';
     $('notifBtn').classList.toggle('active', on);
-    $('notifBtn').title = on ? 'Notifications on — click to disable' : 'Notifications off — click to enable';
+    $('notifBtn').title = label;
+    $('notifBtn').setAttribute('aria-label', label);
 }
 
 function sendBrowserNotif(title, body) {
@@ -3392,24 +3499,25 @@ function initTheme() {
 
 function applyTheme(theme) {
     document.documentElement.dataset.theme = theme;
+    const label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
     $('themeToggle').textContent = theme === 'dark' ? '☀️' : '🌙';
-    $('themeToggle').title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+    $('themeToggle').title = label;
+    $('themeToggle').setAttribute('aria-label', label);
 }
 
 initTheme();
 initTip();
-$('hiwToggle').addEventListener('click', () => {
-    $('hiwToggle').classList.toggle('collapsed');
-    $('hiwBody').classList.toggle('collapsed');
-});
-$('tipToggle').addEventListener('click', () => {
-    $('tipToggle').classList.toggle('collapsed');
-    $('tipBody').classList.toggle('collapsed');
-});
-$('badgeToggle').addEventListener('click', () => {
-    $('badgeToggle').classList.toggle('collapsed');
-    $('badgeBody').classList.toggle('collapsed');
-});
+function wireCollapsible(toggleId, bodyId) {
+    $(toggleId).addEventListener('click', () => {
+        $(toggleId).classList.toggle('collapsed');
+        $(bodyId).classList.toggle('collapsed');
+        const expanded = !$(toggleId).classList.contains('collapsed');
+        $(toggleId).setAttribute('aria-expanded', String(expanded));
+    });
+}
+wireCollapsible('hiwToggle', 'hiwBody');
+wireCollapsible('tipToggle', 'tipBody');
+wireCollapsible('badgeToggle', 'badgeBody');
 $('headerDot').addEventListener('click', (e) => {
     e.stopPropagation();
     headerCelebrate();
