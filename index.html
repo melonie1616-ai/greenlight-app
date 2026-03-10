@@ -844,6 +844,50 @@
             color: var(--green-600);
         }
         .cheer-btn .cheer-pop { animation: pop 0.25s ease-out; }
+
+        /* ── Comments ── */
+        .post-comments {
+            padding-left: 48px;
+            margin-top: 8px;
+        }
+        .comment-list {
+            display: flex; flex-direction: column; gap: 6px;
+            margin-bottom: 8px;
+        }
+        .comment-item {
+            font-size: 0.85rem; line-height: 1.4; color: var(--gray-700);
+        }
+        .comment-author {
+            font-weight: 600; color: var(--gray-900); margin-right: 4px;
+        }
+        .comment-time {
+            font-size: 0.7rem; color: var(--gray-400); margin-left: 6px;
+        }
+        .comment-toggle {
+            background: none; border: none; font-family: inherit;
+            font-size: 0.8rem; color: var(--gray-400); cursor: pointer;
+            padding: 0; margin-top: 4px; font-weight: 500;
+            transition: color 0.12s;
+        }
+        .comment-toggle:hover { color: var(--green-600); }
+        .comment-form {
+            display: flex; gap: 6px; margin-top: 6px;
+        }
+        .comment-input {
+            flex: 1; padding: 6px 10px; border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm); font-family: inherit; font-size: 0.84rem;
+            background: var(--white); color: var(--gray-900); transition: border-color 0.15s;
+        }
+        .comment-input:focus { outline: none; border-color: var(--green-400); box-shadow: 0 0 0 3px rgba(34,197,94,0.12); }
+        .comment-input::placeholder { color: var(--gray-400); }
+        .comment-send {
+            background: var(--green-600); color: white; border: none;
+            padding: 6px 12px; border-radius: var(--radius-sm);
+            font-family: inherit; font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; white-space: nowrap; transition: background 0.15s;
+        }
+        .comment-send:hover { background: #15803d; }
+        .comment-send:disabled { opacity: 0.4; cursor: not-allowed; }
         @keyframes pop {
             0% { transform: scale(1); }
             50% { transform: scale(1.3); }
@@ -2288,6 +2332,11 @@ class LocalStore {
         const x = p.find(v => v.id === id);
         if (x) { x.message = message; x.editedAt = new Date().toISOString(); this._save(p); this._emit(); }
     }
+    addComment(id, comment) {
+        const p = this._load();
+        const x = p.find(v => v.id === id);
+        if (x) { if (!x.comments) x.comments = []; x.comments.push(comment); this._save(p); this._emit(); }
+    }
     onPostsChanged(cb) { this._cbs.push(cb); cb(this._load()); }
     destroy() { this._cbs = []; }
 }
@@ -2314,6 +2363,11 @@ class FirestoreStore {
     }
     editPost(id, message) {
         this.ref.doc(id).update({ message, editedAt: new Date().toISOString() });
+    }
+    addComment(id, comment) {
+        this.ref.doc(id).update({
+            comments: firebase.firestore.FieldValue.arrayUnion(comment)
+        });
     }
     onPostsChanged(cb) {
         this._unsub = this.ref.orderBy('timestamp', 'desc').limit(200)
@@ -2822,10 +2876,12 @@ function makeCard(post, animate) {
         <div class="post-footer">
             ${cat ? `<span class="post-category-tag">${cat.emoji} ${cat.label}</span>` : ''}
             ${buildReactionsHtml(post)}
-        </div>`;
+        </div>
+        ${buildCommentsHtml(post)}`;
 
     wireReactions(div, post);
     wirePostMenu(div, post);
+    wireComments(div, post);
     const authorLink = div.querySelector('.post-author-link');
     if (authorLink && !isOwn) {
         authorLink.addEventListener('click', () => openThread(post.userId, post.userName));
@@ -2842,6 +2898,13 @@ function updateCard(el, post) {
         newRw.innerHTML = buildReactionsHtml(post);
         rw.replaceWith(newRw.firstElementChild);
         wireReactions(el, post);
+    }
+    const cs = el.querySelector('.post-comments');
+    if (cs) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = buildCommentsHtml(post);
+        cs.replaceWith(tmp.firstElementChild);
+        wireComments(el, post);
     }
     const t = el.querySelector('.post-time');
     if (t) t.textContent = timeAgo(post.timestamp);
@@ -3225,6 +3288,80 @@ function toggleReaction(postId, emoji) {
     } else if (post.userId !== user.id) {
         sendBrowserNotif(`${emoji} Reaction!`, `${user.name} reacted to your post.`);
     }
+}
+
+/* ── Comments ── */
+function buildCommentsHtml(post) {
+    const comments = post.comments || [];
+    const count = comments.length;
+    const preview = comments.slice(-2);
+    const hasMore = count > 2;
+
+    let listHtml = '';
+    if (count > 0) {
+        listHtml = `<div class="comment-list">${preview.map(c =>
+            `<div class="comment-item"><span class="comment-author">${esc(c.userName)}</span>${esc(c.text)}<span class="comment-time">${timeAgo(c.timestamp)}</span></div>`
+        ).join('')}</div>`;
+    }
+
+    const toggleHtml = hasMore
+        ? `<button class="comment-toggle" data-post-id="${post.id}">View all ${count} comments</button>`
+        : '';
+
+    return `<div class="post-comments" data-post-id="${post.id}">
+        ${toggleHtml}${listHtml}
+        <div class="comment-form">
+            <input class="comment-input" placeholder="Add a comment..." maxlength="300" autocomplete="off">
+            <button class="comment-send" disabled>Post</button>
+        </div>
+    </div>`;
+}
+
+function wireComments(el, post) {
+    const section = el.querySelector(`.post-comments[data-post-id="${post.id}"]`);
+    if (!section) return;
+
+    const input = section.querySelector('.comment-input');
+    const sendBtn = section.querySelector('.comment-send');
+    const toggle = section.querySelector('.comment-toggle');
+
+    input.addEventListener('input', () => {
+        sendBtn.disabled = !input.value.trim();
+    });
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && input.value.trim()) submitComment(post.id, input);
+    });
+    sendBtn.addEventListener('click', () => {
+        if (input.value.trim()) submitComment(post.id, input);
+    });
+
+    if (toggle) {
+        toggle.addEventListener('click', () => {
+            const comments = (allPosts.find(p => p.id === post.id) || post).comments || [];
+            const list = section.querySelector('.comment-list');
+            if (list) {
+                list.innerHTML = comments.map(c =>
+                    `<div class="comment-item"><span class="comment-author">${esc(c.userName)}</span>${esc(c.text)}<span class="comment-time">${timeAgo(c.timestamp)}</span></div>`
+                ).join('');
+            }
+            toggle.remove();
+        });
+    }
+}
+
+function submitComment(postId, input) {
+    const text = input.value.trim();
+    if (!text) return;
+    const comment = {
+        id: genId(),
+        userId: user.id,
+        userName: user.name,
+        text,
+        timestamp: new Date().toISOString()
+    };
+    store.addComment(postId, comment);
+    input.value = '';
+    input.nextElementSibling.disabled = true;
 }
 
 /* ── Messaging ── */
