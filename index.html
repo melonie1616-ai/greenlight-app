@@ -3162,7 +3162,8 @@ function buildReactionsHtml(post) {
         const users = reactions[emoji] || [];
         if (users.includes(user.name)) myReactions.push(emoji);
         if (users.length > 0) {
-            pills.push(`<span class="react-pill ${users.includes(user.name) ? 'mine' : ''}" data-emoji="${emoji}" data-post-id="${post.id}">${emoji} <span class="rp-count">${users.length}</span></span>`);
+            const names = users.join(', ');
+            pills.push(`<span class="react-pill ${users.includes(user.name) ? 'mine' : ''}" data-emoji="${emoji}" data-post-id="${post.id}" title="${esc(names)}">${emoji} <span class="rp-count">${users.length}</span></span>`);
         }
     }
 
