@@ -3168,8 +3168,10 @@ function buildReactionsHtml(post) {
     }
 
     const hasReacted = myReactions.length > 0;
+    const allNames = [...new Set(Object.values(reactions).flat())];
+    const toggleTitle = allNames.length ? allNames.join(', ') : 'React';
     return `<div class="reaction-wrap">
-        <button class="react-toggle ${hasReacted ? 'has-reacted' : ''}" data-post-id="${post.id}" title="React">
+        <button class="react-toggle ${hasReacted ? 'has-reacted' : ''}" data-post-id="${post.id}" title="${esc(toggleTitle)}">
             ${hasReacted ? myReactions[0] : '🤍'} <span>${Object.values(reactions).reduce((s, a) => s + a.length, 0) || ''}</span>
         </button>
         ${pills.length ? `<div class="react-pills">${pills.join('')}</div>` : ''}
