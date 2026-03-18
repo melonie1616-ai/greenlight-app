@@ -2110,6 +2110,9 @@ const FIREBASE_CONFIG = {
     appId:             "1:504543565978:web:97135831b46903390fa723"
 };
 
+const CHALLENGE_START = '2026-03-23';
+const CHALLENGE_DAYS  = 30;
+
 const CATEGORIES = [
     { id: 'exercise',    emoji: '🏃', label: 'Exercise' },
     { id: 'reading',     emoji: '📚', label: 'Reading' },
@@ -2308,6 +2311,20 @@ function activeDays30(posts, userIds) {
     return days.size;
 }
 
+function challengeActiveDays(posts, userIds) {
+    const ids = typeof userIds === 'object' ? userIds : new Set([userIds]);
+    const start = new Date(CHALLENGE_START + 'T00:00:00');
+    const end = new Date(start);
+    end.setDate(end.getDate() + CHALLENGE_DAYS);
+    const days = new Set(
+        posts.filter(p => {
+            const t = new Date(p.timestamp);
+            return ids.has(p.userId) && t >= start && t < end;
+        }).map(p => toDayStr(p.timestamp))
+    );
+    return days.size;
+}
+
 function allActivity(posts) {
     const byName = {};
     for (const p of posts) {
@@ -2315,8 +2332,10 @@ function allActivity(posts) {
         if (!byName[key]) byName[key] = { userName: p.userName, userIds: new Set() };
         byName[key].userIds.add(p.userId);
     }
+    const started = new Date() >= new Date(CHALLENGE_START + 'T00:00:00');
+    const countFn = started ? challengeActiveDays : activeDays30;
     return Object.values(byName)
-        .map(u => ({ userName: u.userName, days: activeDays30(posts, u.userIds) }))
+        .map(u => ({ userName: u.userName, days: countFn(posts, u.userIds) }))
         .filter(u => u.days > 0)
         .sort((a, b) => b.days - a.days)
         .slice(0, 8);
@@ -3279,17 +3298,41 @@ function renderDashboard(posts) {
         ? `🟢 ${daysActive} day${daysActive > 1 ? 's' : ''} this week${badge ? ' · ' + badge.emoji + ' ' + badge.label : ''}`
         : 'Your Week';
 
-    const days30 = activeDays30(posts, ids);
-    const pct = Math.round((days30 / 30) * 100);
-    $('abCount').textContent = days30;
-    $('abFill').style.width = pct + '%';
-    let msg = '';
-    if (days30 === 0) msg = 'Post your first check-in to get started!';
-    else if (days30 < 10) msg = 'Keep going — build the habit!';
-    else if (days30 < 20) msg = 'Great consistency — keep it up!';
-    else if (days30 < 30) msg = 'Almost there — you\'re crushing it!';
-    else msg = 'Perfect 30 days — amazing! 🎉';
-    $('abMsg').textContent = msg;
+    const challengeStart = new Date(CHALLENGE_START + 'T00:00:00');
+    const challengeEnd = new Date(challengeStart);
+    challengeEnd.setDate(challengeEnd.getDate() + CHALLENGE_DAYS);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (today < challengeStart) {
+        const daysUntil = Math.ceil((challengeStart - today) / 86400000);
+        $('abCount').textContent = '0';
+        $('abFill').style.width = '0%';
+        $('abMsg').textContent = `Challenge starts in ${daysUntil} day${daysUntil !== 1 ? 's' : ''} — ${challengeStart.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}`;
+    } else {
+        const days30 = challengeActiveDays(posts, ids);
+        const elapsed = Math.min(CHALLENGE_DAYS, Math.floor((today - challengeStart) / 86400000) + 1);
+        const pct = Math.round((days30 / CHALLENGE_DAYS) * 100);
+        $('abCount').textContent = days30;
+        $('abFill').style.width = pct + '%';
+        let msg = '';
+        if (today >= challengeEnd) {
+            msg = days30 === CHALLENGE_DAYS ? 'Perfect 30 days — amazing! 🎉' : `Challenge complete — ${days30} of ${CHALLENGE_DAYS} days!`;
+        } else if (days30 === 0) {
+            msg = 'Post your first check-in to get started!';
+        } else if (days30 === elapsed) {
+            msg = `Perfect so far — ${days30} for ${days30}! 🔥`;
+        } else if (days30 < 10) {
+            msg = 'Keep going — build the habit!';
+        } else if (days30 < 20) {
+            msg = 'Great consistency — keep it up!';
+        } else if (days30 < CHALLENGE_DAYS) {
+            msg = 'Almost there — you\'re crushing it!';
+        } else {
+            msg = 'Perfect 30 days — amazing! 🎉';
+        }
+        $('abMsg').textContent = msg;
+    }
 }
 
 /* ── Reactions ── */
