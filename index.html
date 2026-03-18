@@ -362,62 +362,10 @@
             color: rgba(255,255,255,0.8);
             font-weight: 400;
         }
-        .header-trend-label {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: rgba(255,255,255,0.85);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-top: 18px;
-            margin-bottom: 6px;
-        }
-        .header-trend {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 0;
-        }
-        .ht-day {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-        }
-        .ht-dot {
-            width: 38px; height: 38px;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: rgba(255,255,255,0.4);
-            transition: all 0.2s;
-        }
-        .ht-dot.active {
-            background: rgba(255,255,255,0.92);
-            border-color: rgba(255,255,255,0.95);
-            color: #16a34a;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .ht-dot.today {
-            box-shadow: 0 0 0 2.5px rgba(255,255,255,0.5);
-        }
-        .ht-dot.future { opacity: 0.35; }
-        .ht-label {
-            font-size: 0.65rem;
-            color: rgba(255,255,255,0.78);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-        }
-        .ht-dot.active + .ht-label,
-        .ht-day .active ~ .ht-label { color: rgba(255,255,255,0.85); }
-        @media (max-width: 480px) {
-            .header-trend { gap: 6px; }
-            .ht-dot { width: 32px; height: 32px; font-size: 0.7rem; }
+        .mobile-leaderboard-wrap { display: none; }
+        @media (max-width: 768px) {
+            .mobile-leaderboard-wrap { display: block; }
+            .mobile-leaderboard-wrap .card { margin: 0; }
         }
 
         /* ── Layout ── */
@@ -1777,7 +1725,6 @@
         .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
         .skip-link { position: absolute; top: -100px; left: 16px; background: var(--green-600); color: white; padding: 8px 16px; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.9rem; z-index: 9999; transition: top 0.2s; }
         .skip-link:focus { top: 8px; }
-        .mobile-leaderboard { display: none; }
         .mobile-leaderboard:empty { display: none !important; }
         .mobile-leaderboard .hl-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; color: var(--gray-500); margin-bottom: 10px; }
         .mobile-leaderboard .hl-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--gray-100); }
@@ -1786,7 +1733,7 @@
         .mobile-leaderboard .hl-row:first-child .hl-rank { background: var(--green-50); color: var(--green-600); }
         .mobile-leaderboard .hl-name { flex: 1; font-size: 0.88rem; font-weight: 500; color: var(--gray-700); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .mobile-leaderboard .hl-streak { font-size: 0.82rem; font-weight: 600; color: var(--green-600); flex-shrink: 0; }
-        @media (max-width: 768px) { .mobile-leaderboard { display: block; } }
+        
         .profile-modal { max-width: 380px; }
         .profile-modal h2 { font-size: 1.2rem; margin-bottom: 16px; }
         .profile-field { margin-bottom: 14px; }
@@ -1916,8 +1863,6 @@
         <div class="header-main">
             <h1><span class="green-dot" id="headerDot" title="Try clicking me!"></span>Green Light</h1>
             <p>All systems go. One good thing, just for YOU, every day.</p>
-            <div class="header-trend-label" id="headerTrendLabel"></div>
-            <div class="header-trend" id="headerTrend"></div>
         </div>
     </div>
     <svg class="header-wave" viewBox="0 0 1440 40" preserveAspectRatio="none">
@@ -1935,6 +1880,11 @@
             <div class="ab-msg" id="abMsg"></div>
         </div>
     </div>
+</div>
+
+<!-- Mobile Leaderboard (shown at top on small screens) -->
+<div class="activity-bar mobile-leaderboard-wrap" id="mobileLeaderboardWrap">
+    <div class="card mobile-leaderboard" id="mobileLeaderboard"></div>
 </div>
 
 <!-- Main App -->
@@ -2008,7 +1958,6 @@
                 <div class="badge-grid" id="badgeGrid"></div>
             </div>
         </div>
-        <div class="card mobile-leaderboard" id="mobileLeaderboard"></div>
         <div class="card" id="loginCodeCard" style="display:none;">
             <div class="card-title">Your Login Code</div>
             <p style="font-size:0.82rem;color:var(--gray-500);margin-bottom:8px;line-height:1.45;">Save this code to restore your account on another browser or device.</p>
@@ -3253,50 +3202,9 @@ function showNextPrompt() {
     $('promptText').textContent = PROMPTS[promptIdx];
 }
 
-/* ── Dashboard Strip ── */
+/* ── Dashboard / Activity Bar ── */
 function renderDashboard(posts) {
-    const now = new Date();
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
-    startOfWeek.setHours(0, 0, 0, 0);
-
     const ids = myPostIds(posts);
-    const myPosts = posts.filter(p => isMyPost(p, ids));
-    const weekPosts = myPosts.filter(p => new Date(p.timestamp) >= startOfWeek);
-    const daysActive = new Set(weekPosts.map(p => new Date(p.timestamp).toDateString())).size;
-
-    let reactionsGiven = 0, reactionsReceived = 0;
-    for (const p of posts) {
-        if (new Date(p.timestamp) < startOfWeek) continue;
-        const rx = p.reactions || {};
-        for (const arr of Object.values(rx)) {
-            if (arr.includes(user.name)) reactionsGiven++;
-            if (isMyPost(p, ids)) reactionsReceived += arr.length;
-        }
-    }
-
-    const streak = calcStreak(posts, ids);
-    const badge = streakBadge(streak);
-
-    const dayLabels = ['S','M','T','W','T','F','S'];
-    const todayIdx = now.getDay();
-    let trendHtml = '';
-    for (let d = 0; d < 7; d++) {
-        const date = new Date(startOfWeek);
-        date.setDate(startOfWeek.getDate() + d);
-        const dateStr = date.toISOString().slice(0, 10);
-        const active = myPosts.some(p => p.timestamp && p.timestamp.slice(0, 10) === dateStr);
-        const isFuture = date > now;
-        const isToday = d === todayIdx;
-        trendHtml += `<div class="ht-day">
-            <div class="ht-dot ${active ? 'active' : ''} ${isToday ? 'today' : ''} ${isFuture ? 'future' : ''}">${active ? '✓' : ''}</div>
-            <span class="ht-label">${dayLabels[d]}</span>
-        </div>`;
-    }
-    $('headerTrend').innerHTML = trendHtml;
-    $('headerTrendLabel').textContent = daysActive > 0
-        ? `🟢 ${daysActive} day${daysActive > 1 ? 's' : ''} this week${badge ? ' · ' + badge.emoji + ' ' + badge.label : ''}`
-        : 'Your Week';
 
     const challengeStart = new Date(CHALLENGE_START + 'T00:00:00');
     const challengeEnd = new Date(challengeStart);
