@@ -117,7 +117,7 @@
         /* ── Header ── */
         .header {
             background: linear-gradient(135deg, #15803d 0%, #16a34a 40%, #059669 100%);
-            padding: 52px 20px 36px;
+            padding: 52px 20px 60px;
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -301,28 +301,7 @@
             color: rgba(255,255,255,0.8);
             font-weight: 400;
         }
-        /* ── Top Section (Activity + Leaderboard) ── */
-        .top-section {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 6px 32px 0;
-            display: grid;
-            grid-template-columns: 1fr 300px;
-            gap: 16px;
-            align-items: start;
-        }
-        .top-left { display: flex; flex-direction: column; gap: 10px; }
-        .top-right { position: relative; }
-        @media (max-width: 1024px) {
-            .top-section { padding: 6px 20px 0; }
-        }
-        @media (max-width: 768px) {
-            .top-section {
-                grid-template-columns: 1fr;
-                padding: 10px 12px 6px;
-            }
-            .top-right { order: -1; position: static; }
-        }
+        
 
         /* ── Layout ── */
         .dashboard-strip {
@@ -360,17 +339,17 @@
         .container {
             max-width: 1280px;
             margin: 0 auto;
-            padding: 6px 32px 20px;
+            padding: 20px 32px;
             display: grid;
             grid-template-columns: 1fr 300px;
             gap: 24px;
         }
         @media (max-width: 1024px) {
-            .container { max-width: 100%; padding: 6px 20px 20px; }
+            .container { max-width: 100%; padding: 20px; }
             .dashboard-strip { padding: 0 20px; }
         }
         @media (max-width: 768px) {
-            .container { grid-template-columns: 1fr; padding: 4px 12px 12px; gap: 14px; }
+            .container { grid-template-columns: 1fr; padding: 12px; gap: 14px; }
             .sidebar-right { order: 1; }
             .dashboard-strip { padding: 0 12px; }
             .dash-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1845,9 +1824,10 @@
     </svg>
 </header>
 
-<!-- Top Section: Activity + Leaderboard -->
-<div class="top-section">
-    <div class="top-left">
+<!-- Main App -->
+<div class="container">
+    <main class="main-col">
+
         <div class="activity-bar-inner">
             <div class="ab-icon">🟢</div>
             <div class="ab-info">
@@ -1856,15 +1836,6 @@
                 <div class="ab-msg" id="abMsg"></div>
             </div>
         </div>
-    </div>
-    <div class="top-right">
-        <div class="lb-card" id="leaderboardCard"></div>
-    </div>
-</div>
-
-<!-- Main App -->
-<div class="container">
-    <main class="main-col">
 
         <div class="card post-form">
             <div class="post-input-wrap">
@@ -1908,6 +1879,7 @@
     </main>
 
     <aside class="sidebar-right">
+        <div class="lb-card" id="leaderboardCard"></div>
         <div class="card how-it-works">
             <div class="card-title collapsible" id="hiwToggle" aria-expanded="true" aria-controls="hiwBody">How It Works <span class="collapse-toggle"><span class="collapse-label"></span> <span class="collapse-arrow">▾</span></span></div>
             <ul class="collapsible-body" id="hiwBody">
