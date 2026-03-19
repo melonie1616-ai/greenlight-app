@@ -1701,7 +1701,48 @@
         .lb-card .hl-streak {
             font-size: 0.82rem; font-weight: 700; color: var(--green-600); flex-shrink: 0;
         }
-        
+
+        /* ── Activity Notifications ── */
+        .notif-bar {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 32px 6px;
+        }
+        @media (max-width: 900px) { .notif-bar { padding: 0 20px 6px; } }
+        @media (max-width: 768px) { .notif-bar { padding: 0 12px 6px; } }
+        .notif-card:empty { display: none !important; }
+        .notif-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 12px 18px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .notif-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .notif-title {
+            font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em;
+            font-weight: 700; color: var(--gray-500);
+        }
+        .notif-dismiss {
+            background: none; border: none; font-size: 0.72rem; color: var(--gray-400);
+            cursor: pointer; font-family: inherit; font-weight: 500;
+            padding: 2px 6px; border-radius: 4px; transition: all 0.15s;
+        }
+        .notif-dismiss:hover { background: var(--gray-100); color: var(--gray-600); }
+        .notif-list { display: flex; flex-direction: column; gap: 4px; }
+        .notif-item {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.84rem; color: var(--gray-700);
+            padding: 4px 0;
+        }
+        .notif-emoji { font-size: 1rem; flex-shrink: 0; width: 22px; text-align: center; }
+        .notif-text { flex: 1; line-height: 1.35; }
+        .notif-text strong { font-weight: 600; color: var(--gray-900); }
+        .notif-time { font-size: 0.7rem; color: var(--gray-400); flex-shrink: 0; }
+
         .profile-modal { max-width: 380px; }
         .profile-modal h2 { font-size: 1.2rem; margin-bottom: 16px; }
         .profile-field { margin-bottom: 14px; }
@@ -1852,6 +1893,11 @@
 <!-- Leaderboard -->
 <div class="leaderboard-bar">
     <div class="lb-card" id="leaderboardCard"></div>
+</div>
+
+<!-- Activity Notifications -->
+<div class="notif-bar">
+    <div class="notif-card" id="notifCard"></div>
 </div>
 
 <!-- Main App -->
@@ -2764,6 +2810,7 @@ function onPosts(posts) {
     renderFeed(posts);
     renderTopStreaks(posts);
     renderDashboard(posts);
+    renderNotifications(posts);
 }
 
 function setAvatar(el, name) {
@@ -3163,6 +3210,58 @@ function initPrompts() {
 function showNextPrompt() {
     promptIdx = (promptIdx + 1) % PROMPTS.length;
     $('promptText').textContent = PROMPTS[promptIdx];
+}
+
+/* ── Activity Notifications ── */
+function renderNotifications(posts) {
+    const card = $('notifCard');
+    const ids = myPostIds(posts);
+    const myPosts = posts.filter(p => isMyPost(p, ids));
+    const items = [];
+
+    for (const post of myPosts) {
+        const rx = post.reactions || {};
+        for (const [emoji, users] of Object.entries(rx)) {
+            for (const u of users) {
+                if (u.toLowerCase().trim() === user.name.toLowerCase().trim()) continue;
+                items.push({
+                    emoji,
+                    text: `<strong>${esc(u)}</strong> reacted to your post`,
+                    snippet: post.message ? post.message.slice(0, 30) + (post.message.length > 30 ? '…' : '') : (post.category || ''),
+                    time: post.timestamp
+                });
+            }
+        }
+        const comments = post.comments || [];
+        for (const c of comments) {
+            if (c.userName.toLowerCase().trim() === user.name.toLowerCase().trim()) continue;
+            items.push({
+                emoji: '💬',
+                text: `<strong>${esc(c.userName)}</strong> commented on your post`,
+                snippet: c.text.slice(0, 40) + (c.text.length > 40 ? '…' : ''),
+                time: c.timestamp
+            });
+        }
+    }
+
+    items.sort((a, b) => new Date(b.time) - new Date(a.time));
+    const recent = items.slice(0, 8);
+
+    if (!recent.length) { card.innerHTML = ''; return; }
+
+    card.innerHTML = `
+        <div class="notif-header">
+            <span class="notif-title">Activity on your posts</span>
+            <button class="notif-dismiss" onclick="this.closest('.notif-card').innerHTML=''">Dismiss</button>
+        </div>
+        <div class="notif-list">
+            ${recent.map(n => `<div class="notif-item">
+                <span class="notif-emoji">${n.emoji}</span>
+                <span class="notif-text">${n.text}${n.snippet ? ` <span style="color:var(--gray-400);font-size:0.78rem">— ${esc(n.snippet)}</span>` : ''}</span>
+                <span class="notif-time">${timeAgo(n.time)}</span>
+            </div>`).join('')}
+        </div>
+    `;
 }
 
 /* ── Dashboard / Activity Bar ── */
