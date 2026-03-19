@@ -301,13 +301,28 @@
             color: rgba(255,255,255,0.8);
             font-weight: 400;
         }
-        .leaderboard-bar {
+        /* ── Top Section (Activity + Leaderboard) ── */
+        .top-section {
             max-width: 1280px;
             margin: 0 auto;
-            padding: 0 32px 6px;
+            padding: 14px 32px 10px;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 16px;
+            align-items: start;
         }
-        @media (max-width: 900px) { .leaderboard-bar { padding: 0 20px 6px; } }
-        @media (max-width: 768px) { .leaderboard-bar { padding: 0 12px 6px; } }
+        .top-left { display: flex; flex-direction: column; gap: 10px; }
+        .top-right { position: sticky; top: 20px; }
+        @media (max-width: 1024px) {
+            .top-section { padding: 14px 20px 10px; }
+        }
+        @media (max-width: 768px) {
+            .top-section {
+                grid-template-columns: 1fr;
+                padding: 10px 12px 6px;
+            }
+            .top-right { order: -1; position: static; }
+        }
 
         /* ── Layout ── */
         .dashboard-strip {
@@ -366,11 +381,6 @@
         }
 
         /* ── 30-Day Activity Bar ── */
-        .activity-bar {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 14px 32px 10px;
-        }
         .activity-bar-inner {
             display: flex;
             align-items: center;
@@ -411,11 +421,7 @@
         .ab-msg {
             font-size: 0.72rem; color: var(--gray-400); margin-top: 4px;
         }
-        @media (max-width: 900px) {
-            .activity-bar { padding: 12px 20px 8px; }
-        }
         @media (max-width: 768px) {
-            .activity-bar { padding: 10px 12px 6px; }
             .activity-bar-inner { padding: 10px 14px; gap: 10px; }
         }
 
@@ -1703,13 +1709,6 @@
         }
 
         /* ── Activity Notifications ── */
-        .notif-bar {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 32px 6px;
-        }
-        @media (max-width: 900px) { .notif-bar { padding: 0 20px 6px; } }
-        @media (max-width: 768px) { .notif-bar { padding: 0 12px 6px; } }
         .notif-card:empty { display: none !important; }
         .notif-card {
             background: var(--white);
@@ -1878,26 +1877,22 @@
     </svg>
 </header>
 
-<!-- 30-Day Activity Bar -->
-<div class="activity-bar" id="activityBar">
-    <div class="activity-bar-inner">
-        <div class="ab-icon">🟢</div>
-        <div class="ab-info">
-            <div class="ab-label"><span class="ab-count" id="abCount">0</span><span class="ab-of">/ 30 days</span></div>
-            <div class="ab-track"><div class="ab-fill" id="abFill" style="width:0%"></div></div>
-            <div class="ab-msg" id="abMsg"></div>
+<!-- Top Section: Activity + Leaderboard -->
+<div class="top-section">
+    <div class="top-left">
+        <div class="activity-bar-inner">
+            <div class="ab-icon">🟢</div>
+            <div class="ab-info">
+                <div class="ab-label"><span class="ab-count" id="abCount">0</span><span class="ab-of">/ 30 days</span></div>
+                <div class="ab-track"><div class="ab-fill" id="abFill" style="width:0%"></div></div>
+                <div class="ab-msg" id="abMsg"></div>
+            </div>
         </div>
+        <div class="notif-card" id="notifCard"></div>
     </div>
-</div>
-
-<!-- Leaderboard -->
-<div class="leaderboard-bar">
-    <div class="lb-card" id="leaderboardCard"></div>
-</div>
-
-<!-- Activity Notifications -->
-<div class="notif-bar">
-    <div class="notif-card" id="notifCard"></div>
+    <div class="top-right">
+        <div class="lb-card" id="leaderboardCard"></div>
+    </div>
 </div>
 
 <!-- Main App -->
