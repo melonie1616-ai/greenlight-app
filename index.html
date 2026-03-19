@@ -117,7 +117,7 @@
         /* ── Header ── */
         .header {
             background: linear-gradient(135deg, #15803d 0%, #16a34a 40%, #059669 100%);
-            padding: 52px 20px 60px;
+            padding: 52px 20px 44px;
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -305,16 +305,18 @@
         .top-section {
             max-width: 1280px;
             margin: 0 auto;
-            padding: 14px 32px 0;
+            padding: 6px 32px 0;
             display: grid;
             grid-template-columns: 1fr 300px;
             gap: 16px;
             align-items: start;
+            position: relative;
+            z-index: 50;
         }
         .top-left { display: flex; flex-direction: column; gap: 10px; }
-        .top-right { position: sticky; top: 20px; }
+        .top-right { position: relative; }
         @media (max-width: 1024px) {
-            .top-section { padding: 14px 20px 10px; }
+            .top-section { padding: 6px 20px 0; }
         }
         @media (max-width: 768px) {
             .top-section {
@@ -360,7 +362,7 @@
         .container {
             max-width: 1280px;
             margin: 0 auto;
-            padding: 10px 32px 20px;
+            padding: 6px 32px 20px;
             display: grid;
             grid-template-columns: 1fr 300px;
             gap: 24px;
