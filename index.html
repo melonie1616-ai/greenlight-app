@@ -310,8 +310,6 @@
             grid-template-columns: 1fr 300px;
             gap: 16px;
             align-items: start;
-            position: relative;
-            z-index: 50;
         }
         .top-left { display: flex; flex-direction: column; gap: 10px; }
         .top-right { position: relative; }
@@ -1710,70 +1708,7 @@
             font-size: 0.82rem; font-weight: 700; color: var(--green-600); flex-shrink: 0;
         }
 
-        /* ── Notification Bell + Dropdown ── */
-        .notif-bell-wrap {
-            position: relative;
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 8px;
-            z-index: 9999;
-        }
-        .notif-bell {
-            background: var(--white); border: 1px solid var(--gray-200);
-            border-radius: var(--radius-sm); padding: 6px 12px;
-            font-size: 1.1rem; cursor: pointer; position: relative;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.15s;
-            font-family: inherit;
-        }
-        .notif-bell:hover { border-color: var(--green-400); box-shadow: 0 1px 6px rgba(34,197,94,0.12); }
-        .notif-badge {
-            position: absolute; top: -6px; right: -6px;
-            background: #ef4444; color: white; font-size: 0.65rem; font-weight: 700;
-            min-width: 18px; height: 18px; border-radius: 9px;
-            display: flex; align-items: center; justify-content: center;
-            padding: 0 4px; line-height: 1;
-        }
-        .notif-badge.hidden { display: none; }
-        .notif-dropdown {
-            position: absolute; top: calc(100% + 6px); right: 0; z-index: 9999;
-            width: 340px; max-height: 400px;
-            background: var(--white); border: 1px solid var(--gray-200);
-            border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-            overflow: hidden; display: flex; flex-direction: column;
-        }
-        .notif-dropdown.hidden { display: none; }
-        .notif-dd-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 16px; border-bottom: 1px solid var(--gray-100);
-        }
-        .notif-dd-title {
-            font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.06em; color: var(--gray-600);
-        }
-        .notif-dd-close {
-            background: none; border: none; font-size: 0.9rem; color: var(--gray-400);
-            cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: all 0.12s;
-        }
-        .notif-dd-close:hover { background: var(--gray-100); color: var(--gray-700); }
-        .notif-dd-body {
-            overflow-y: auto; flex: 1; padding: 6px 0;
-        }
-        .notif-dd-empty {
-            padding: 24px 16px; text-align: center;
-            font-size: 0.84rem; color: var(--gray-400);
-        }
-        .notif-item {
-            display: flex; align-items: center; gap: 8px;
-            padding: 8px 16px; transition: background 0.1s;
-        }
-        .notif-item:hover { background: var(--gray-50); }
-        .notif-emoji { font-size: 1rem; flex-shrink: 0; width: 22px; text-align: center; }
-        .notif-text { flex: 1; font-size: 0.82rem; line-height: 1.35; color: var(--gray-700); }
-        .notif-text strong { font-weight: 600; color: var(--gray-900); }
-        .notif-time { font-size: 0.68rem; color: var(--gray-400); flex-shrink: 0; }
-        @media (max-width: 768px) {
-            .notif-dropdown { width: calc(100vw - 40px); right: -10px; }
-        }
+        
 
         .profile-modal { max-width: 380px; }
         .profile-modal h2 { font-size: 1.2rem; margin-bottom: 16px; }
@@ -1923,20 +1858,6 @@
         </div>
     </div>
     <div class="top-right">
-        <div class="notif-bell-wrap">
-            <button class="notif-bell" id="notifBell" aria-label="Notifications">
-                🔔 <span class="notif-badge hidden" id="notifBadge">0</span>
-            </button>
-            <div class="notif-dropdown hidden" id="notifDropdown">
-                <div class="notif-dd-header">
-                    <span class="notif-dd-title">Activity</span>
-                    <button class="notif-dd-close" id="notifDdClose" aria-label="Close">✕</button>
-                </div>
-                <div class="notif-dd-body" id="notifDdBody">
-                    <div class="notif-dd-empty">No activity yet</div>
-                </div>
-            </div>
-        </div>
         <div class="lb-card" id="leaderboardCard"></div>
     </div>
 </div>
@@ -2810,7 +2731,6 @@ function startApp() {
     renderMyAvatar();
     showLoginCode();
     initProfileModal();
-    initNotifBell();
     syncAvatarFromFirestore();
     store.onPostsChanged(onPosts);
 }
@@ -2852,7 +2772,6 @@ function onPosts(posts) {
     renderFeed(posts);
     renderTopStreaks(posts);
     renderDashboard(posts);
-    renderNotifications(posts);
 }
 
 function setAvatar(el, name) {
@@ -3252,83 +3171,6 @@ function initPrompts() {
 function showNextPrompt() {
     promptIdx = (promptIdx + 1) % PROMPTS.length;
     $('promptText').textContent = PROMPTS[promptIdx];
-}
-
-/* ── Activity Notifications ── */
-let notifItems = [];
-
-function renderNotifications(posts) {
-    const ids = myPostIds(posts);
-    const myPosts = posts.filter(p => isMyPost(p, ids));
-    const items = [];
-
-    for (const post of myPosts) {
-        const rx = post.reactions || {};
-        for (const [emoji, users] of Object.entries(rx)) {
-            for (const u of users) {
-                if (u.toLowerCase().trim() === user.name.toLowerCase().trim()) continue;
-                items.push({
-                    emoji,
-                    text: `<strong>${esc(u)}</strong> reacted to your post`,
-                    snippet: post.message ? post.message.slice(0, 30) + (post.message.length > 30 ? '…' : '') : (post.category || ''),
-                    time: post.timestamp
-                });
-            }
-        }
-        const comments = post.comments || [];
-        for (const c of comments) {
-            if (c.userName.toLowerCase().trim() === user.name.toLowerCase().trim()) continue;
-            items.push({
-                emoji: '💬',
-                text: `<strong>${esc(c.userName)}</strong> commented on your post`,
-                snippet: c.text.slice(0, 40) + (c.text.length > 40 ? '…' : ''),
-                time: c.timestamp
-            });
-        }
-    }
-
-    items.sort((a, b) => new Date(b.time) - new Date(a.time));
-    notifItems = items.slice(0, 15);
-
-    const badge = $('notifBadge');
-    if (notifItems.length > 0) {
-        badge.textContent = notifItems.length;
-        badge.classList.remove('hidden');
-    } else {
-        badge.classList.add('hidden');
-    }
-
-    renderNotifDropdown();
-}
-
-function renderNotifDropdown() {
-    const body = $('notifDdBody');
-    if (!notifItems.length) {
-        body.innerHTML = '<div class="notif-dd-empty">No activity yet</div>';
-        return;
-    }
-    body.innerHTML = notifItems.map(n => `<div class="notif-item">
-        <span class="notif-emoji">${n.emoji}</span>
-        <span class="notif-text">${n.text}${n.snippet ? ` <span style="color:var(--gray-400);font-size:0.76rem">— ${esc(n.snippet)}</span>` : ''}</span>
-        <span class="notif-time">${timeAgo(n.time)}</span>
-    </div>`).join('');
-}
-
-function initNotifBell() {
-    const bell = $('notifBell');
-    const dropdown = $('notifDropdown');
-    const close = $('notifDdClose');
-
-    bell.addEventListener('click', e => {
-        e.stopPropagation();
-        dropdown.classList.toggle('hidden');
-    });
-    close.addEventListener('click', () => dropdown.classList.add('hidden'));
-    document.addEventListener('click', e => {
-        if (!dropdown.classList.contains('hidden') && !dropdown.contains(e.target) && e.target !== bell) {
-            dropdown.classList.add('hidden');
-        }
-    });
 }
 
 /* ── Dashboard / Activity Bar ── */
