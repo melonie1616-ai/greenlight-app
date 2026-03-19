@@ -3032,7 +3032,7 @@ function renderTopStreaks(posts) {
         lb.innerHTML = '';
         return;
     }
-    const top5 = s.slice(0, 5);
+    const top5 = s.slice(0, 10);
     const rows = top5.map((x, i) => {
         const emoji = x.days >= 20 ? '🔥' : x.days >= 10 ? '⭐' : x.days >= 5 ? '💚' : '🟢';
         return `<div class="hl-row">
