@@ -397,8 +397,12 @@
             border-radius: 4px;
             transition: width 0.5s ease;
         }
+        .ab-dates {
+            font-size: 0.74rem; color: var(--gray-500); margin-top: 4px; font-weight: 500;
+        }
+        .ab-dates .ab-today { font-weight: 700; color: var(--green-600); }
         .ab-msg {
-            font-size: 0.72rem; color: var(--gray-400); margin-top: 4px;
+            font-size: 0.72rem; color: var(--gray-400); margin-top: 2px;
         }
         @media (max-width: 768px) {
             .activity-bar-inner { padding: 10px 14px; gap: 10px; }
@@ -1107,6 +1111,56 @@
             font-family: inherit;
         }
 
+        .activity-badge {
+            position: absolute;
+            top: -4px; right: -4px;
+            min-width: 18px; height: 18px;
+            background: #ef4444;
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 700;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            font-family: inherit;
+        }
+        .activity-badge.hidden { display: none; }
+
+        /* ── Activity Modal ── */
+        .activity-modal {
+            max-width: 440px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .activity-modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding-bottom: 14px; border-bottom: 1px solid var(--gray-100);
+            margin-bottom: 12px;
+        }
+        .activity-modal-header h2 { margin: 0; font-size: 1.1rem; }
+        .activity-list {
+            overflow-y: auto; flex: 1;
+            display: flex; flex-direction: column; gap: 2px;
+        }
+        .activity-list-empty {
+            text-align: center; padding: 32px 16px;
+            color: var(--gray-400); font-size: 0.9rem;
+        }
+        .act-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 4px; border-radius: var(--radius-sm);
+            transition: background 0.1s;
+        }
+        .act-item:hover { background: var(--gray-50); }
+        .act-emoji { font-size: 1.1rem; flex-shrink: 0; width: 24px; text-align: center; }
+        .act-text { flex: 1; font-size: 0.84rem; line-height: 1.4; color: var(--gray-700); }
+        .act-text strong { font-weight: 600; color: var(--gray-900); }
+        .act-snippet { color: var(--gray-400); font-size: 0.78rem; }
+        .act-time { font-size: 0.7rem; color: var(--gray-400); flex-shrink: 0; }
+
         /* ── Message Modal ── */
         .msg-modal {
             max-width: 520px;
@@ -1653,6 +1707,12 @@
         .skip-link:focus { top: 8px; }
         /* ── Unified Leaderboard Card ── */
         .lb-card:empty { display: none !important; }
+        .lb-mobile { display: none; }
+        .lb-desktop { display: block; }
+        @media (max-width: 768px) {
+            .lb-mobile { display: block; }
+            .lb-desktop { display: none; }
+        }
         .lb-card {
             background: var(--white);
             border: 1px solid var(--gray-200);
@@ -1808,7 +1868,7 @@
     </div>
     <div class="header-top-right">
         <div class="header-icons">
-            <button class="msg-btn" id="msgBtn" title="Messages" aria-label="Messages">💬<span class="msg-badge hidden" id="msgBadge" aria-live="polite">0</span></button>
+            <button class="activity-btn" id="activityBtn" title="Activity" aria-label="Activity">❤️<span class="activity-badge hidden" id="activityBadge">0</span></button>
             <button class="notif-btn" id="notifBtn" title="Toggle notifications" aria-label="Toggle notifications">🔔</button>
             <button class="theme-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
         </div>
@@ -1833,9 +1893,12 @@
             <div class="ab-info">
                 <div class="ab-label"><span class="ab-count" id="abCount">0</span><span class="ab-of">/ 30 days</span></div>
                 <div class="ab-track"><div class="ab-fill" id="abFill" style="width:0%"></div></div>
+                <div class="ab-dates" id="abDates"></div>
                 <div class="ab-msg" id="abMsg"></div>
             </div>
         </div>
+
+        <div class="lb-card lb-mobile" id="leaderboardCardMobile"></div>
 
         <div class="card post-form">
             <div class="post-input-wrap">
@@ -1879,7 +1942,7 @@
     </main>
 
     <aside class="sidebar-right">
-        <div class="lb-card" id="leaderboardCard"></div>
+        <div class="lb-card lb-desktop" id="leaderboardCard"></div>
         <div class="card how-it-works">
             <div class="card-title collapsible" id="hiwToggle" aria-expanded="true" aria-controls="hiwBody">How It Works <span class="collapse-toggle"><span class="collapse-label"></span> <span class="collapse-arrow">▾</span></span></div>
             <ul class="collapsible-body" id="hiwBody">
@@ -1914,6 +1977,19 @@
             </div>
         </div>
     </aside>
+</div>
+
+<!-- Activity Modal -->
+<div id="activityModal" class="modal-overlay hidden">
+    <div class="modal activity-modal">
+        <div class="activity-modal-header">
+            <h2>❤️ Activity</h2>
+            <button class="btn-close-modal" id="activityModalClose">✕</button>
+        </div>
+        <div class="activity-list" id="activityList">
+            <div class="activity-list-empty">No activity yet</div>
+        </div>
+    </div>
 </div>
 
 <!-- Message Modal -->
@@ -2703,6 +2779,7 @@ function startApp() {
     renderMyAvatar();
     showLoginCode();
     initProfileModal();
+    initActivityModal();
     syncAvatarFromFirestore();
     store.onPostsChanged(onPosts);
 }
@@ -2744,6 +2821,7 @@ function onPosts(posts) {
     renderFeed(posts);
     renderTopStreaks(posts);
     renderDashboard(posts);
+    renderActivity(posts);
 }
 
 function setAvatar(el, name) {
@@ -2960,13 +3038,15 @@ function initFeedTabs() {
 function renderTopStreaks(posts) {
     const s = allActivity(posts);
     const lb = $('leaderboardCard');
+    const lbm = $('leaderboardCardMobile');
 
     if (!s.length) {
         lb.innerHTML = '';
+        if (lbm) lbm.innerHTML = '';
         return;
     }
-    const top5 = s.slice(0, 10);
-    const rows = top5.map((x, i) => {
+    const top10 = s.slice(0, 10);
+    const rows = top10.map((x, i) => {
         const emoji = x.days >= 20 ? '🔥' : x.days >= 10 ? '⭐' : x.days >= 5 ? '💚' : '🟢';
         return `<div class="hl-row">
             <span class="hl-rank">${i + 1}</span>
@@ -2974,10 +3054,12 @@ function renderTopStreaks(posts) {
             <span class="hl-streak">${emoji} ${x.days}d</span>
         </div>`;
     }).join('');
-    lb.innerHTML = `
+    const html = `
         <div class="hl-title">Leaderboard <span style="font-weight:400;opacity:0.7;font-size:0.7rem">(30d)</span></div>
         ${rows}
     `;
+    lb.innerHTML = html;
+    if (lbm) lbm.innerHTML = html;
 }
 
 function submitPost() {
@@ -3145,6 +3227,72 @@ function showNextPrompt() {
     $('promptText').textContent = PROMPTS[promptIdx];
 }
 
+/* ── Activity Notifications ── */
+function renderActivity(posts) {
+    const ids = myPostIds(posts);
+    const myPosts = posts.filter(p => isMyPost(p, ids));
+    const items = [];
+
+    for (const post of myPosts) {
+        const rx = post.reactions || {};
+        for (const [emoji, users] of Object.entries(rx)) {
+            for (const u of users) {
+                if (u.toLowerCase().trim() === user.name.toLowerCase().trim()) continue;
+                items.push({
+                    emoji,
+                    text: `<strong>${esc(u)}</strong> reacted to your post`,
+                    snippet: post.message ? post.message.slice(0, 30) + (post.message.length > 30 ? '…' : '') : '',
+                    time: post.timestamp
+                });
+            }
+        }
+        const comments = post.comments || [];
+        for (const c of comments) {
+            if (c.userName.toLowerCase().trim() === user.name.toLowerCase().trim()) continue;
+            items.push({
+                emoji: '💬',
+                text: `<strong>${esc(c.userName)}</strong> commented on your post`,
+                snippet: c.text.slice(0, 40) + (c.text.length > 40 ? '…' : ''),
+                time: c.timestamp
+            });
+        }
+    }
+
+    items.sort((a, b) => new Date(b.time) - new Date(a.time));
+    const recent = items.slice(0, 20);
+
+    const badge = $('activityBadge');
+    if (recent.length > 0) {
+        badge.textContent = recent.length;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+
+    const list = $('activityList');
+    if (!recent.length) {
+        list.innerHTML = '<div class="activity-list-empty">No reactions or comments on your posts yet</div>';
+        return;
+    }
+    list.innerHTML = recent.map(n => `<div class="act-item">
+        <span class="act-emoji">${n.emoji}</span>
+        <span class="act-text">${n.text}${n.snippet ? ` <span class="act-snippet">— ${esc(n.snippet)}</span>` : ''}</span>
+        <span class="act-time">${timeAgo(n.time)}</span>
+    </div>`).join('');
+}
+
+function initActivityModal() {
+    $('activityBtn').addEventListener('click', () => {
+        $('activityModal').classList.remove('hidden');
+    });
+    $('activityModalClose').addEventListener('click', () => {
+        $('activityModal').classList.add('hidden');
+    });
+    $('activityModal').addEventListener('click', e => {
+        if (e.target === $('activityModal')) $('activityModal').classList.add('hidden');
+    });
+}
+
 /* ── Dashboard / Activity Bar ── */
 function renderDashboard(posts) {
     const ids = myPostIds(posts);
@@ -3155,11 +3303,19 @@ function renderDashboard(posts) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const fmtShort = d => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const fmtFull = d => d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+    const dayNum = today >= challengeStart ? Math.min(CHALLENGE_DAYS, Math.floor((today - challengeStart) / 86400000) + 1) : 0;
+    const dateLine = dayNum > 0
+        ? `<span class="ab-today">Day ${dayNum}</span> · ${fmtShort(challengeStart)} – ${fmtShort(challengeEnd)}`
+        : `${fmtShort(challengeStart)} – ${fmtShort(challengeEnd)}`;
+    $('abDates').innerHTML = dateLine;
+
     if (today < challengeStart) {
         const daysUntil = Math.ceil((challengeStart - today) / 86400000);
         $('abCount').textContent = '0';
         $('abFill').style.width = '0%';
-        $('abMsg').textContent = `Challenge starts in ${daysUntil} day${daysUntil !== 1 ? 's' : ''} — ${challengeStart.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}`;
+        $('abMsg').textContent = `Challenge starts in ${daysUntil} day${daysUntil !== 1 ? 's' : ''} — ${fmtFull(challengeStart)}`;
     } else {
         const days30 = challengeActiveDays(posts, ids);
         const elapsed = Math.min(CHALLENGE_DAYS, Math.floor((today - challengeStart) / 86400000) + 1);
