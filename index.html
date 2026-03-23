@@ -3493,7 +3493,7 @@ function submitComment(postId, input) {
 
 /* ── Messaging ── */
 function initMessaging() {
-    $('msgBtn').addEventListener('click', openInbox);
+    if ($('msgBtn')) $('msgBtn').addEventListener('click', openInbox);
     $('msgClose').addEventListener('click', closeMsg);
     $('msgCloseThread').addEventListener('click', closeMsg);
     $('msgBack').addEventListener('click', () => { $('msgThread').classList.add('hidden'); $('msgInbox').classList.remove('hidden'); });
